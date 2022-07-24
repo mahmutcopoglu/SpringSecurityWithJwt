@@ -11,5 +11,5 @@ public interface LogRepository {
 
 	void saveLog(Log log);
 	
-	public List<Log> findByAccountNumber(long accountNumber);
+	List<Log> findByAccountNumber(long accountNumber);
 }

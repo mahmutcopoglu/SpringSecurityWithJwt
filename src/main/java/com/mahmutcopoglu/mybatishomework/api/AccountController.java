@@ -19,7 +19,7 @@ import com.mahmutcopoglu.mybatishomework.dto.AccountCreateRequest;
 import com.mahmutcopoglu.mybatishomework.dto.MoneyTransferRequest;
 import com.mahmutcopoglu.mybatishomework.entity.Account;
 import com.mahmutcopoglu.mybatishomework.entity.Log;
-import com.mahmutcopoglu.mybatishomework.repository.MyBatisLogRepository;
+import com.mahmutcopoglu.mybatishomework.repository.LogRepository;
 import com.mahmutcopoglu.mybatishomework.responses.AccountCreateInvalidTypeResponse;
 import com.mahmutcopoglu.mybatishomework.responses.AccountCreateSuccessResponse;
 import com.mahmutcopoglu.mybatishomework.responses.AccountLogResponse;
@@ -32,7 +32,7 @@ public class AccountController {
 	private AccountServiceImpl accountServiceImpl;
 	
 	@Autowired
-	private MyBatisLogRepository myBatisLogRepository;
+	private LogRepository myBatisLogRepository;
 	
 	@Autowired
 	private KafkaTemplate<String,String> producer;

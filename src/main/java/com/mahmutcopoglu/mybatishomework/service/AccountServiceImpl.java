@@ -6,13 +6,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.mahmutcopoglu.mybatishomework.entity.Account;
 import com.mahmutcopoglu.mybatishomework.enums.AccountType;
-import com.mahmutcopoglu.mybatishomework.repository.MyBatisAccountRepository;
+import com.mahmutcopoglu.mybatishomework.repository.AccountRepository;
 
 @Service
 public class AccountServiceImpl implements AccountService {
 
 	@Autowired
-	private MyBatisAccountRepository myBatisAccountRepository;
+	private AccountRepository myBatisAccountRepository;
 	
 	@Autowired
 	private ExchangeService exchangeService;
@@ -21,7 +21,18 @@ public class AccountServiceImpl implements AccountService {
 	@Transactional
 	@Override
 	public Account save(String name, String surname, String email, String tc, AccountType type) {
-		Account account = this.myBatisAccountRepository.saveAccount(name, surname, email, tc, type);
+		Account account = new Account();
+		long number = (long) Math.floor(Math.random() * 9_000_000_000L) + 1_000_000_000L;
+		account.setAccountNumber(number);
+		account.setBalance(0);
+		account.setName(name);
+		account.setEmail(email);
+		account.setSurname(surname);
+		account.setTc(tc);
+		account.setType(type);
+		account.setDeleted(false);
+		account.setLastModified(System.currentTimeMillis());
+		this.myBatisAccountRepository.saveAccount(account);
 		return account;
 		
 	}
@@ -38,7 +49,10 @@ public class AccountServiceImpl implements AccountService {
 	public Account updateBalance(int id, double balance) {
 		
 		Account account = this.myBatisAccountRepository.findById(id);
-		return this.myBatisAccountRepository.updateBalance(id, balance + account.getBalance());
+		if(this.myBatisAccountRepository.updateAccountAmount(id, account.getBalance() + balance)>0) {
+			return this.myBatisAccountRepository.findById(id);
+		}
+		return null;
 	}
 
 	@Transactional
