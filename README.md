@@ -6,8 +6,11 @@
 
 Arkadaşlar bu ödevde son yaptığımız bankacılık ödevine güvenlik ve user yönetim katmanı ekleyeceğiz.
 
-### !! NOT !!
+### !! NOT 1 !!
 Arkadaşlar kodunuza **local anestezi** yapacaksınız. Zaten çalışan kodun biraz önüne biraz arkasına security katmanı ekleyeceksiniz. Sıfırdan yazmayın servislerinizi sakın!!!
+
+### !! NOT 2 !!
+Arkadaşlar custom userDetailsService'i benim dökümanımda almak bir seçenek ancak myBatis ile yapmakta bir seçenek. myBatis ile yapanlar ekstra puan alacaktır. Zor değil myBatis'e bir query koyacaksınız loadByUsername methodunda myBatis'teki query'inizi çağıracaksınız!
 
 1 - Sistemimizde userlar olacaktır artık. Userlarımızın
 ```
@@ -81,8 +84,3 @@ Ve create işlemi yapılırken authenticated user'in id'si alınıp accounts tab
 
 Bunlar dışında diğer servislere şimdilik karışmanızı istemiyorum. (Zaten logları getiren servis kaldı geriye, ona birşey yapmanıza gerek yok)
     		
-
-
-
-
-
