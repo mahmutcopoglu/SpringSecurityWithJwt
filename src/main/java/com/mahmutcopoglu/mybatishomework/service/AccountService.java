@@ -19,4 +19,6 @@ public interface AccountService {
 	boolean transfer(double amount, int ownerAccountId, int transferAccountId);
 	
 	boolean delete(int id);
+	
+	boolean hasAuth(int id);
 }

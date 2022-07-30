@@ -1,9 +1,11 @@
 package com.mahmutcopoglu.mybatishomework.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.mahmutcopoglu.mybatishomework.dto.UserDatabase;
 import com.mahmutcopoglu.mybatishomework.entity.Account;
 import com.mahmutcopoglu.mybatishomework.enums.AccountType;
 import com.mahmutcopoglu.mybatishomework.repository.AccountRepository;
@@ -13,17 +15,18 @@ public class AccountServiceImpl implements AccountService {
 
 	@Autowired
 	private AccountRepository myBatisAccountRepository;
-	
+
 	@Autowired
 	private ExchangeService exchangeService;
-	
-	
+
 	@Transactional
 	@Override
 	public Account save(String name, String surname, String email, String tc, AccountType type) {
+		UserDatabase dbUser = (UserDatabase) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		Account account = new Account();
 		long number = (long) Math.floor(Math.random() * 9_000_000_000L) + 1_000_000_000L;
 		account.setAccountNumber(number);
+		account.setUserId(dbUser.getId());
 		account.setBalance(0);
 		account.setName(name);
 		account.setEmail(email);
@@ -34,7 +37,7 @@ public class AccountServiceImpl implements AccountService {
 		account.setLastModified(System.currentTimeMillis());
 		this.myBatisAccountRepository.saveAccount(account);
 		return account;
-		
+
 	}
 
 	@Transactional
@@ -47,9 +50,9 @@ public class AccountServiceImpl implements AccountService {
 	@Transactional
 	@Override
 	public Account updateBalance(int id, double balance) {
-		
+
 		Account account = this.myBatisAccountRepository.findById(id);
-		if(this.myBatisAccountRepository.updateAccountAmount(id, account.getBalance() + balance)>0) {
+		if (this.myBatisAccountRepository.updateAccountAmount(id, account.getBalance() + balance) > 0) {
 			return this.myBatisAccountRepository.findById(id);
 		}
 		return null;
@@ -61,25 +64,36 @@ public class AccountServiceImpl implements AccountService {
 		Account ownerAccount = this.myBatisAccountRepository.findById(ownerAccountId);
 		Account transferAccount = this.myBatisAccountRepository.findById(transferAccountId);
 		double transferAmount = amount;
-		
-		if(ownerAccount.getBalance() < amount && amount<=0) {
+
+		if (ownerAccount.getBalance() < amount && amount <= 0) {
 			return false;
 		}
-		
-		if(!ownerAccount.getType().equals(transferAccount.getType())) {
+
+		if (!ownerAccount.getType().equals(transferAccount.getType())) {
 			transferAmount = this.exchangeService.exchange(amount, ownerAccount.getType(), transferAccount.getType());
 			System.out.println(transferAmount);
 		}
-		
+
 		this.myBatisAccountRepository.transfer(ownerAccount.getBalance() - amount, ownerAccountId);
 		this.myBatisAccountRepository.transfer(transferAccount.getBalance() + transferAmount, transferAccountId);
 		return true;
-		
+
 	}
-	
+
 	public boolean delete(int id) {
-		return this.myBatisAccountRepository.deleteAccount(id)>0;
-		
+		return this.myBatisAccountRepository.deleteAccount(id) > 0;
+
+	}
+
+	@Override
+	public boolean hasAuth(int id) {
+		Account account = this.myBatisAccountRepository.findById(id);
+		int accountId = account.getUserId();
+		UserDatabase dbUser = (UserDatabase) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		if(dbUser.getId() != accountId) {
+			return false;
+		}
+		return true;
 	}
 
 }

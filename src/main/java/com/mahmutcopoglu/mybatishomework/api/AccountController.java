@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -23,13 +24,15 @@ import com.mahmutcopoglu.mybatishomework.repository.LogRepository;
 import com.mahmutcopoglu.mybatishomework.responses.AccountCreateInvalidTypeResponse;
 import com.mahmutcopoglu.mybatishomework.responses.AccountCreateSuccessResponse;
 import com.mahmutcopoglu.mybatishomework.responses.AccountLogResponse;
-import com.mahmutcopoglu.mybatishomework.service.AccountServiceImpl;
+import com.mahmutcopoglu.mybatishomework.responses.ForbiddenResponse;
+import com.mahmutcopoglu.mybatishomework.service.AccountService;
+
 
 @RestController
 public class AccountController {
 
 	@Autowired
-	private AccountServiceImpl accountServiceImpl;
+	private AccountService accountService;
 	
 	@Autowired
 	private LogRepository myBatisLogRepository;
@@ -40,7 +43,7 @@ public class AccountController {
 	@PostMapping("/accounts")
 	public ResponseEntity<?> createAccount(@RequestBody AccountCreateRequest accountCreateRequest){
 		
-		Account account = this.accountServiceImpl.save(
+		Account account = this.accountService.save(
 				accountCreateRequest.getName(),
 				accountCreateRequest.getSurname(),
 				accountCreateRequest.getEmail(),
@@ -62,32 +65,51 @@ public class AccountController {
 	
 	@GetMapping("/accounts/{id}")
 	public ResponseEntity<?> detail(@PathVariable int id) {
-		Account account = this.accountServiceImpl.findById(id);
-		return ResponseEntity.ok().lastModified(account.getLastModified()).body(account);
+		if(this.accountService.hasAuth(id)) {
+			Account account = this.accountService.findById(id);
+			return ResponseEntity.ok().lastModified(account.getLastModified()).body(account);
+		}else {
+			ForbiddenResponse forbiddenResponse = new ForbiddenResponse();
+			forbiddenResponse.setMessage("Invalid Account Id");
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(forbiddenResponse);
+		}
+		
 	}
 	
 	@PatchMapping(path = "/account/{id}")
-	public ResponseEntity<Account> deposit(@PathVariable(name = "id") int id,
+	public ResponseEntity<?> deposit(@PathVariable(name = "id") int id,
 									  @RequestBody AccountAmountRequest accountAmountRequest) {
-		Account account = this.accountServiceImpl.updateBalance(id, accountAmountRequest.getAmount());
+		if(this.accountService.hasAuth(id)) {
+		Account account = this.accountService.updateBalance(id, accountAmountRequest.getAmount());
 		String message = account.getAccountNumber() + " deposit amount:" + accountAmountRequest.getAmount() + " " + account.getType();
 		producer.send("log",message);
 		return ResponseEntity.ok().body(account);
+		}else {
+			ForbiddenResponse forbiddenResponse = new ForbiddenResponse();
+			forbiddenResponse.setMessage("Invalid Account Id");
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(forbiddenResponse);
+		}
 		
 	}
 	
 	@PostMapping("/accounts/{id}")
 	public ResponseEntity<?> transfer(@PathVariable(name = "id") int id,
 			  @RequestBody MoneyTransferRequest moneyTransferRequest){
-		Account account = this.accountServiceImpl.findById(id);
-		Account transferAccount = this.accountServiceImpl.findById(moneyTransferRequest.getTransferredAccountId());
-		boolean result = this.accountServiceImpl.transfer(moneyTransferRequest.getAmount(), id, moneyTransferRequest.getTransferredAccountId());
+		if(this.accountService.hasAuth(id)) {
+		Account account = this.accountService.findById(id);
+		Account transferAccount = this.accountService.findById(moneyTransferRequest.getTransferredAccountId());
+		boolean result = this.accountService.transfer(moneyTransferRequest.getAmount(), id, moneyTransferRequest.getTransferredAccountId());
 		if(result) {
 			String message = account.getAccountNumber() + " transfer amount:" + moneyTransferRequest.getAmount()+ " " + account.getType() + ",transferred_account:" + transferAccount.getAccountNumber();
 			producer.send("log",message);
 			return ResponseEntity.ok().body("Transfer Successfull");
 		}
 		return ResponseEntity.badRequest().body("Insufficient Balance");
+		}else {
+			ForbiddenResponse forbiddenResponse = new ForbiddenResponse();
+			forbiddenResponse.setMessage("Invalid Account Id");
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(forbiddenResponse);
+		}
 	}
 	
 	@GetMapping(path = "/account/log/{accountNumber}")
@@ -102,7 +124,7 @@ public class AccountController {
 	
 	@DeleteMapping(path = "/account/{id}")
 	private ResponseEntity<?> deleteAccount(@PathVariable(name = "id") int id){
-		boolean deleteRecord = this.accountServiceImpl.delete(id);
+		boolean deleteRecord = this.accountService.delete(id);
 		if(deleteRecord)
 		{
 			return ResponseEntity.ok().body(true);

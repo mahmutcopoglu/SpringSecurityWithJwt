@@ -20,6 +20,7 @@ public class Account {
 	private double balance;
 	private long lastModified;
 	private boolean deleted;
+	private int userId;
 	
 
 }
