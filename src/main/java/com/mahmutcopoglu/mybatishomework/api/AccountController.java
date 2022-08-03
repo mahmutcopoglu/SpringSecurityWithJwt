@@ -6,7 +6,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.kafka.core.KafkaTemplate;
+/*import org.springframework.kafka.core.KafkaTemplate;*/
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -37,8 +37,9 @@ public class AccountController {
 	@Autowired
 	private LogRepository myBatisLogRepository;
 	
-	@Autowired
-	private KafkaTemplate<String,String> producer;
+	/*
+	 * @Autowired private KafkaTemplate<String,String> producer;
+	 */
 	
 	@PostMapping("/accounts")
 	public ResponseEntity<?> createAccount(@RequestBody AccountCreateRequest accountCreateRequest){
@@ -82,7 +83,7 @@ public class AccountController {
 		if(this.accountService.hasAuth(id)) {
 		Account account = this.accountService.updateBalance(id, accountAmountRequest.getAmount());
 		String message = account.getAccountNumber() + " deposit amount:" + accountAmountRequest.getAmount() + " " + account.getType();
-		producer.send("log",message);
+		/* producer.send("log",message); */
 		return ResponseEntity.ok().body(account);
 		}else {
 			ForbiddenResponse forbiddenResponse = new ForbiddenResponse();
@@ -101,7 +102,7 @@ public class AccountController {
 		boolean result = this.accountService.transfer(moneyTransferRequest.getAmount(), id, moneyTransferRequest.getTransferredAccountId());
 		if(result) {
 			String message = account.getAccountNumber() + " transfer amount:" + moneyTransferRequest.getAmount()+ " " + account.getType() + ",transferred_account:" + transferAccount.getAccountNumber();
-			producer.send("log",message);
+			/* producer.send("log",message); */
 			return ResponseEntity.ok().body("Transfer Successfull");
 		}
 		return ResponseEntity.badRequest().body("Insufficient Balance");
